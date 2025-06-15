@@ -1,8 +1,12 @@
+-- Fly System with body parts fully following camera orientation, and immediate responsive commands
+
 local prefix = {";", ".", "/", "#", ":", "?"}
 local speeds = 1
 local nowe = false
 local tpwalking = false
 local speaker = game:GetService("Players").LocalPlayer
+local UserInputService = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
 
 -- Function to check if message starts with any prefix
 local function isCommand(message)
@@ -14,199 +18,196 @@ local function isCommand(message)
     return false, message
 end
 
+-- Table to track controls state
+local ctrl = {f = 0, b = 0, l = 0, r = 0}
+
+-- Update control states on input began
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    local key = input.KeyCode
+    if key == Enum.KeyCode.W then ctrl.f = 1
+    elseif key == Enum.KeyCode.S then ctrl.b = -1
+    elseif key == Enum.KeyCode.A then ctrl.l = -1
+    elseif key == Enum.KeyCode.D then ctrl.r = 1
+    end
+end)
+
+-- Update control states on input ended
+UserInputService.InputEnded:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    local key = input.KeyCode
+    if key == Enum.KeyCode.W then ctrl.f = 0
+    elseif key == Enum.KeyCode.S then ctrl.b = 0
+    elseif key == Enum.KeyCode.A then ctrl.l = 0
+    elseif key == Enum.KeyCode.D then ctrl.r = 0
+    end
+end)
+
 -- Fly function
 local function toggleFly()
     if nowe == true then
+        -- Disable fly
         nowe = false
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Flying, true)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.GettingUp, true)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Landed, true)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, true)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.PlatformStanding, true)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, true)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, true)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.RunningNoPhysics, true)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.StrafingNoPhysics, true)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, true)
-        speaker.Character.Humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
+        tpwalking = false
+        local humanoid = speaker.Character and speaker.Character:FindFirstChildOfClass("Humanoid")
+        if humanoid then
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Flying, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.GettingUp, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Landed, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.PlatformStanding, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.RunningNoPhysics, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.StrafingNoPhysics, true)
+            humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, true)
+            humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
+        end
+        if speaker.Character then
+            speaker.Character.Animate.Disabled = false
+        end
     else 
+        -- Enable fly
         nowe = true
-        for i = 1, speeds do
-            spawn(function()
-                local hb = game:GetService("RunService").Heartbeat
-                tpwalking = true
-                local chr = game.Players.LocalPlayer.Character
-                local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
-                while tpwalking and hb:Wait() and chr and hum and hum.Parent do
-                    if hum.MoveDirection.Magnitude > 0 then
-                        chr:TranslateBy(hum.MoveDirection * (speeds / 10))
-                    end
-                end
-            end)
+        tpwalking = true
+        if speaker.Character then
+            speaker.Character.Animate.Disabled = true
         end
-        game.Players.LocalPlayer.Character.Animate.Disabled = true
-        local Char = game.Players.LocalPlayer.Character
-        local Hum = Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController")
-        for i,v in next, Hum:GetPlayingAnimationTracks() do
-            v:AdjustSpeed(0)
+        local Char = speaker.Character
+        local Hum = Char and (Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController"))
+        if Hum then
+            for _, v in next, Hum:GetPlayingAnimationTracks() do
+                v:AdjustSpeed(0)
+            end
+            Hum:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+            Hum:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+            Hum:SetStateEnabled(Enum.HumanoidStateType.Flying, false)
+            Hum:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
+            Hum:SetStateEnabled(Enum.HumanoidStateType.GettingUp, false)
+            Hum:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
+            Hum:SetStateEnabled(Enum.HumanoidStateType.Landed, false)
+            Hum:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
+            Hum:SetStateEnabled(Enum.HumanoidStateType.PlatformStanding, false)
+            Hum:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+            Hum:SetStateEnabled(Enum.HumanoidStateType.Running, false)
+            Hum:SetStateEnabled(Enum.HumanoidStateType.RunningNoPhysics, false)
+            Hum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+            Hum:SetStateEnabled(Enum.HumanoidStateType.StrafingNoPhysics, false)
+            Hum:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
+            Hum:ChangeState(Enum.HumanoidStateType.Swimming)
         end
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Flying, false)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.GettingUp, false)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Landed, false)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.PlatformStanding, false)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, false)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.RunningNoPhysics, false)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.StrafingNoPhysics, false)
-        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
-        speaker.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
-    end
 
-    if game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid").RigType == Enum.HumanoidRigType.R6 then
-        local plr = game.Players.LocalPlayer
-        local torso = plr.Character.Torso
-        local flying = true
-        local deb = true
-        local ctrl = {f = 0, b = 0, l = 0, r = 0}
-        local lastctrl = {f = 0, b = 0, l = 0, r = 0}
-        local maxspeed = speeds * 10 -- Adjusted for better speed scaling
-        local speed = 0
+        -- Prepare movement controls
+        local plr = speaker
+        local rigType = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") and plr.Character:FindFirstChildOfClass("Humanoid").RigType or Enum.HumanoidRigType.R15
+        local rootPart = nil
+        if rigType == Enum.HumanoidRigType.R6 then
+            rootPart = plr.Character and (plr.Character:FindFirstChild("Torso") or plr.Character:FindFirstChild("UpperTorso") or plr.Character.PrimaryPart)
+        else
+            rootPart = plr.Character and (plr.Character:FindFirstChild("UpperTorso") or plr.Character.PrimaryPart)
+        end
+        
+        if not rootPart then
+            nowe = false
+            tpwalking = false
+            if plr.Character then
+                plr.Character.Animate.Disabled = false
+            end
+            return
+        end
 
-        local bg = Instance.new("BodyGyro", torso)
+        local bg = Instance.new("BodyGyro", rootPart)
         bg.P = 9e4
         bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
-        bg.cframe = torso.CFrame
-        local bv = Instance.new("BodyVelocity", torso)
-        bv.velocity = Vector3.new(0,0.1,0)
+        bg.cframe = rootPart.CFrame
+        local bv = Instance.new("BodyVelocity", rootPart)
+        bv.velocity = Vector3.new(0, 0.1, 0)
         bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+
         if nowe == true then
-            plr.Character.Humanoid.PlatformStand = true
-        end
-        while nowe == true or game:GetService("Players").LocalPlayer.Character.Humanoid.Health == 0 do
-            game:GetService("RunService").RenderStepped:Wait()
-            if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
-                speed = speed+.5+(speed/maxspeed)
-                if speed > maxspeed then
-                    speed = maxspeed
-                end
-            elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0) and speed ~= 0 then
-                speed = speed-1
-                if speed < 0 then
-                    speed = 0
-                end
+            local humanoid = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
+            if humanoid then
+                humanoid.PlatformStand = true
             end
-            if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 then
-                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f+ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l+ctrl.r,(ctrl.f+ctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
-                lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
-            elseif (ctrl.l + ctrl.r) == 0 and (ctrl.f + ctrl.b) == 0 and speed ~= 0 then
-                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (lastctrl.f+lastctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(lastctrl.l+lastctrl.r,(lastctrl.f+lastctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
-            else
-                bv.velocity = Vector3.new(0,0,0)
-            end
-            -- Keep the character upright: set the BodyGyro CFrame with no pitch or roll, only yaw from camera
-            local camCF = game.Workspace.CurrentCamera.CoordinateFrame
-            local lookVector = camCF.lookVector
-            local newCFrame = CFrame.new(torso.Position, torso.Position + Vector3.new(lookVector.X, 0, lookVector.Z)) -- Yaw only
-            bg.cframe = newCFrame
         end
-        ctrl = {f = 0, b = 0, l = 0, r = 0}
-        lastctrl = {f = 0, b = 0, l = 0, r = 0}
-        speed = 0
-        bg:Destroy()
-        bv:Destroy()
-        plr.Character.Humanoid.PlatformStand = false
-        game.Players.LocalPlayer.Character.Animate.Disabled = false
-        tpwalking = false
-    else
-        local plr = game.Players.LocalPlayer
-        local UpperTorso = plr.Character.UpperTorso
-        local flying = true
-        local deb = true
-        local ctrl = {f = 0, b = 0, l = 0, r = 0}
-        local lastctrl = {f = 0, b = 0, l = 0, r = 0}
-        local maxspeed = speeds * 10 -- Adjusted for better speed scaling
+
+        local maxspeed = speeds * 10
         local speed = 0
 
-        local bg = Instance.new("BodyGyro", UpperTorso)
-        bg.P = 9e4
-        bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
-        bg.cframe = UpperTorso.CFrame
-        local bv = Instance.new("BodyVelocity", UpperTorso)
-        bv.velocity = Vector3.new(0,0.1,0)
-        bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
-        if nowe == true then
-            plr.Character.Humanoid.PlatformStand = true
-        end
-        while nowe == true or game:GetService("Players").LocalPlayer.Character.Humanoid.Health == 0 do
-            wait()
+        while nowe == true and plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") and plr.Character.Humanoid.Health > 0 and rootPart.Parent do
+            RunService.RenderStepped:Wait()
+
+            -- Smooth speed update based on input
             if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
-                speed = speed+.5+(speed/maxspeed)
-                if speed > maxspeed then
-                    speed = maxspeed
-                end
-            elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0) and speed ~= 0 then
-                speed = speed-1
-                if speed < 0 then
-                    speed = 0
-                end
-            end
-            if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 then
-                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f+ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l+ctrl.r,(ctrl.f+ctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
-                lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
-            elseif (ctrl.l + ctrl.r) == 0 and (ctrl.f + ctrl.b) == 0 and speed ~= 0 then
-                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (lastctrl.f+lastctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(lastctrl.l+lastctrl.r,(lastctrl.f+lastctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+                speed = speed + 0.5 + (speed / maxspeed)
+                if speed > maxspeed then speed = maxspeed end
             else
-                bv.velocity = Vector3.new(0,0,0)
+                speed = speed - 1
+                if speed < 0 then speed = 0 end
             end
-            -- Keep the character upright: set the BodyGyro CFrame with no pitch or roll, only yaw from camera
-            local camCF = game.Workspace.CurrentCamera.CoordinateFrame
-            local lookVector = camCF.lookVector
-            local newCFrame = CFrame.new(UpperTorso.Position, UpperTorso.Position + Vector3.new(lookVector.X, 0, lookVector.Z)) -- Yaw only
-            bg.cframe = newCFrame
+
+            -- Movement vector relative to camera orientation
+            local cam = workspace.CurrentCamera
+            local moveVector = Vector3.new(ctrl.l + ctrl.r, 0, ctrl.f + ctrl.b)
+            if moveVector.Magnitude > 0 then
+                moveVector = (cam.CFrame:VectorToWorldSpace(moveVector)).Unit
+            end
+
+            if moveVector.Magnitude == 0 then
+                bv.velocity = Vector3.new(0, 0, 0)
+            else
+                bv.velocity = moveVector * speed
+            end
+
+            -- Follow full camera rotation including pitch and roll
+            if cam and cam.CFrame then
+                bg.cframe = cam.CFrame
+            end
         end
-        ctrl = {f = 0, b = 0, l = 0, r = 0}
-        lastctrl = {f = 0, b = 0, l = 0, r = 0}
-        speed = 0
+
+        -- Cleanup bodygyros and velocity on fly end
         bg:Destroy()
         bv:Destroy()
-        plr.Character.Humanoid.PlatformStand = false
-        game.Players.LocalPlayer.Character.Animate.Disabled = false
+        if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
+            plr.Character.Humanoid.PlatformStand = false
+        end
+        if plr.Character then
+            plr.Character.Animate.Disabled = false
+        end
         tpwalking = false
+        nowe = false
     end
 end
 
 -- Character added event
 game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(char)
     wait(0.7)
-    game.Players.LocalPlayer.Character.Humanoid.PlatformStand = false
-    game.Players.LocalPlayer.Character.Animate.Disabled = false
+    local humanoid = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+    if humanoid then
+        humanoid.PlatformStand = false
+    end
+    if game.Players.LocalPlayer.Character then
+        game.Players.LocalPlayer.Character.Animate.Disabled = false
+    end
     nowe = false
     tpwalking = false
 end)
 
--- Improved chat handler with fixed flyspeed command
+-- Chat command handler with minimal delay
 game:GetService("Players").LocalPlayer.Chatted:Connect(function(message)
     local isCmd, cmd = isCommand(message)
     if isCmd then
-        -- Split command into parts
         local parts = {}
         for part in cmd:gmatch("%S+") do
             table.insert(parts, part:lower())
         end
-        
         if #parts == 0 then return end
-        
+
         if parts[1] == "fly" then
             toggleFly()
             game:GetService("StarterGui"):SetCore("SendNotification", {
@@ -227,22 +228,6 @@ game:GetService("Players").LocalPlayer.Chatted:Connect(function(message)
             local newSpeed = tonumber(parts[2])
             if newSpeed and newSpeed >= 1 and newSpeed <= 10000 then
                 speeds = newSpeed
-                if nowe then
-                    -- Fix: spawn only one tpwalking thread if not already running
-                    if not tpwalking then
-                        tpwalking = true
-                        spawn(function()
-                            local hb = game:GetService("RunService").Heartbeat
-                            local chr = game.Players.LocalPlayer.Character
-                            local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
-                            while tpwalking and hb:Wait() and chr and hum and hum.Parent do
-                                if hum.MoveDirection.Magnitude > 0 then
-                                    chr:TranslateBy(hum.MoveDirection * (speeds / 10))
-                                end
-                            end
-                        end)
-                    end
-                end
                 game:GetService("StarterGui"):SetCore("SendNotification", {
                     Title = "Fly System",
                     Text = "Speed set to " .. speeds,
