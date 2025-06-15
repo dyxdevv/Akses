@@ -1,5 +1,3 @@
--- Fly System with body parts fully following camera orientation, and immediate responsive commands
-
 local prefix = {";", ".", "/", "#", ":", "?"}
 local speeds = 1
 local nowe = false
@@ -102,7 +100,6 @@ local function toggleFly()
             Hum:ChangeState(Enum.HumanoidStateType.Swimming)
         end
 
-        -- Prepare movement controls
         local plr = speaker
         local rigType = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") and plr.Character:FindFirstChildOfClass("Humanoid").RigType or Enum.HumanoidRigType.R15
         local rootPart = nil
@@ -142,7 +139,6 @@ local function toggleFly()
         while nowe == true and plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") and plr.Character.Humanoid.Health > 0 and rootPart.Parent do
             RunService.RenderStepped:Wait()
 
-            -- Smooth speed update based on input
             if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
                 speed = speed + 0.5 + (speed / maxspeed)
                 if speed > maxspeed then speed = maxspeed end
@@ -151,26 +147,25 @@ local function toggleFly()
                 if speed < 0 then speed = 0 end
             end
 
-            -- Movement vector relative to camera orientation
             local cam = workspace.CurrentCamera
-            local moveVector = Vector3.new(ctrl.l + ctrl.r, 0, ctrl.f + ctrl.b)
-            if moveVector.Magnitude > 0 then
-                moveVector = (cam.CFrame:VectorToWorldSpace(moveVector)).Unit
-            end
-
-            if moveVector.Magnitude == 0 then
+            if not cam then
                 bv.velocity = Vector3.new(0, 0, 0)
+                bg.cframe = rootPart.CFrame
             else
-                bv.velocity = moveVector * speed
-            end
-
-            -- Follow full camera rotation including pitch and roll
-            if cam and cam.CFrame then
+                local moveVectorInput = Vector3.new(ctrl.l + ctrl.r, 0, ctrl.f + ctrl.b)
+                local moveVector = Vector3.new()
+                if moveVectorInput.Magnitude > 0 then
+                    moveVector = (cam.CFrame:VectorToWorldSpace(moveVectorInput)).Unit
+                    bv.velocity = moveVector * speed
+                else
+                    bv.velocity = Vector3.new(0,0,0)
+                end
+                -- Follow full camera rotation including pitch and roll
                 bg.cframe = cam.CFrame
             end
         end
 
-        -- Cleanup bodygyros and velocity on fly end
+        -- Cleanup on end
         bg:Destroy()
         bv:Destroy()
         if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
@@ -184,7 +179,7 @@ local function toggleFly()
     end
 end
 
--- Character added event
+-- Handle CharacterAdded event to reset states
 game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(char)
     wait(0.7)
     local humanoid = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -198,7 +193,7 @@ game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(char)
     tpwalking = false
 end)
 
--- Chat command handler with minimal delay
+-- Chat command handler with prompt detection
 game:GetService("Players").LocalPlayer.Chatted:Connect(function(message)
     local isCmd, cmd = isCommand(message)
     if isCmd then
