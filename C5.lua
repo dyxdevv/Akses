@@ -16,7 +16,7 @@ local function isCommand(message)
     return false, message
 end
 
--- Table to track controls state
+-- Table to track controls state; Using 0/1 for pressed/unpressed
 local ctrl = {f = 0, b = 0, l = 0, r = 0}
 
 -- Update control states on input began
@@ -24,8 +24,8 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
     local key = input.KeyCode
     if key == Enum.KeyCode.W then ctrl.f = 1
-    elseif key == Enum.KeyCode.S then ctrl.b = -1
-    elseif key == Enum.KeyCode.A then ctrl.l = -1
+    elseif key == Enum.KeyCode.S then ctrl.b = 1
+    elseif key == Enum.KeyCode.A then ctrl.l = 1
     elseif key == Enum.KeyCode.D then ctrl.r = 1
     end
 end)
@@ -49,6 +49,7 @@ local function toggleFly()
         tpwalking = false
         local humanoid = speaker.Character and speaker.Character:FindFirstChildOfClass("Humanoid")
         if humanoid then
+            humanoid.PlatformStand = false
             humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
             humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
             humanoid:SetStateEnabled(Enum.HumanoidStateType.Flying, true)
@@ -129,7 +130,7 @@ local function toggleFly()
         if nowe == true then
             local humanoid = plr.Character and plr.Character:FindFirstChildOfClass("Humanoid")
             if humanoid then
-                humanoid.PlatformStand = true
+                humanoid.PlatformStand = false -- Set false to allow movement
             end
         end
 
@@ -139,6 +140,7 @@ local function toggleFly()
         while nowe == true and plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") and plr.Character.Humanoid.Health > 0 and rootPart.Parent do
             RunService.RenderStepped:Wait()
 
+            -- Update speed smoothly
             if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
                 speed = speed + 0.5 + (speed / maxspeed)
                 if speed > maxspeed then speed = maxspeed end
@@ -148,24 +150,28 @@ local function toggleFly()
             end
 
             local cam = workspace.CurrentCamera
-            if not cam then
-                bv.velocity = Vector3.new(0, 0, 0)
-                bg.cframe = rootPart.CFrame
-            else
-                local moveVectorInput = Vector3.new(ctrl.l + ctrl.r, 0, ctrl.f + ctrl.b)
-                local moveVector = Vector3.new()
+            if cam then
+                -- Calculate movement vector: forward/back and left/right using pressed keys
+                local forward = ctrl.f - ctrl.b -- W (1) forward, S (1) backward
+                local right = ctrl.r - ctrl.l   -- D (1) right, A (1) left
+                local moveVectorInput = Vector3.new(right, 0, forward)
+                
                 if moveVectorInput.Magnitude > 0 then
-                    moveVector = (cam.CFrame:VectorToWorldSpace(moveVectorInput)).Unit
+                    moveVectorInput = moveVectorInput.Unit
+                    local moveVector = cam.CFrame:VectorToWorldSpace(moveVectorInput)
                     bv.velocity = moveVector * speed
                 else
-                    bv.velocity = Vector3.new(0,0,0)
+                    bv.velocity = Vector3.new(0, 0, 0)
                 end
-                -- Follow full camera rotation including pitch and roll
+                -- BodyGyro to follow full camera rotation (pitch, yaw, roll)
                 bg.cframe = cam.CFrame
+            else
+                bv.velocity = Vector3.new(0,0,0)
+                bg.cframe = rootPart.CFrame
             end
         end
 
-        -- Cleanup on end
+        -- Clean up after flying ends
         bg:Destroy()
         bv:Destroy()
         if plr.Character and plr.Character:FindFirstChildOfClass("Humanoid") then
@@ -179,7 +185,7 @@ local function toggleFly()
     end
 end
 
--- Handle CharacterAdded event to reset states
+-- Character added event to reset states
 game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(char)
     wait(0.7)
     local humanoid = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -193,7 +199,7 @@ game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(char)
     tpwalking = false
 end)
 
--- Chat command handler with prompt detection
+-- Chat command handler with quick and reliable detection
 game:GetService("Players").LocalPlayer.Chatted:Connect(function(message)
     local isCmd, cmd = isCommand(message)
     if isCmd then
