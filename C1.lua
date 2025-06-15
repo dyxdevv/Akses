@@ -1,167 +1,258 @@
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local StarterGui = game:GetService("StarterGui")
-local UserInputService = game:GetService("UserInputService")
+local prefix = {";", ".", "/", "#", ":", "?"}
+local speeds = 1
+local nowe = false
+local tpwalking = false
+local speaker = game:GetService("Players").LocalPlayer
 
--- Configuration
-local MAX_SPEED = 10000
-local currentSpeed = 1
-local isFlying = false
-local flightParts = {}
-local PREFIXES = {";", "/", "#", ":", "?", "."} -- Supported prefixes
-
--- Get flight part (works for R6/R15)
-local function getFlightPart()
-    local char = Players.LocalPlayer.Character
-    return char and (char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("UpperTorso") or char:FindFirstChild("Torso"))
+-- Function to check if message starts with any prefix
+local function isCommand(message)
+    for _, p in ipairs(prefix) do
+        if message:sub(1, #p) == p then
+            return true, message:sub(#p + 1)
+        end
+    end
+    return false, message
 end
 
--- Toggle flight mode
-local function toggleFlight(enable)
-    if enable == isFlying then return end
-    
-    -- Cleanup existing flight parts
-    for _, part in pairs(flightParts) do
-        pcall(function() part:Destroy() end)
-    end
-    flightParts = {}
-    
-    local flightPart = getFlightPart()
-    if not flightPart then return end
-    
-    isFlying = enable
-    
-    if isFlying then
-        -- Initialize flight controls
-        local success, bg, bv = pcall(function()
-            local bg = Instance.new("BodyGyro")
-            bg.Name = "FlightGyro"
-            bg.P = 90000 + (currentSpeed * 1000)
-            bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
-            bg.CFrame = flightPart.CFrame
-            bg.Parent = flightPart
-            
-            local bv = Instance.new("BodyVelocity")
-            bv.Name = "FlightVelocity"
-            bv.Velocity = Vector3.new(0, 0.1, 0)
-            bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
-            bv.Parent = flightPart
-            
-            return bg, bv
-        end)
-        
-        if not success then return end
-        
-        flightParts = {bg, bv}
-        local humanoid = flightPart.Parent:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid.PlatformStand = true
-            humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
-        end
-        
-        -- Flight movement loop
-        coroutine.wrap(function()
-            while isFlying and flightPart and flightPart.Parent do
-                RunService.Heartbeat:Wait()
-                
-                local moveVec = Vector3.new(
-                    UserInputService:IsKeyDown(Enum.KeyCode.D) and 1 or UserInputService:IsKeyDown(Enum.KeyCode.A) and -1 or 0,
-                    UserInputService:IsKeyDown(Enum.KeyCode.Space) and 1 or UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) and -1 or 0,
-                    UserInputService:IsKeyDown(Enum.KeyCode.W) and -1 or UserInputService:IsKeyDown(Enum.KeyCode.S) and 1 or 0
-                )
-                
-                if bv and bv.Parent then
-                    bv.Velocity = workspace.CurrentCamera.CFrame:VectorToWorldSpace(moveVec * currentSpeed * 50)
+-- Fly function
+local function toggleFly()
+    if nowe == true then
+        nowe = false
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Flying, true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.GettingUp, true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Landed, true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.PlatformStanding, true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.RunningNoPhysics, true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.StrafingNoPhysics, true)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, true)
+        speaker.Character.Humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
+    else 
+        nowe = true
+        for i = 1, speeds do
+            spawn(function()
+                local hb = game:GetService("RunService").Heartbeat
+                tpwalking = true
+                local chr = game.Players.LocalPlayer.Character
+                local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
+                while tpwalking and hb:Wait() and chr and hum and hum.Parent do
+                    if hum.MoveDirection.Magnitude > 0 then
+                        chr:TranslateBy(hum.MoveDirection)
+                    end
                 end
-                if bg and bg.Parent then
-                    bg.CFrame = workspace.CurrentCamera.CFrame
+            end)
+        end
+        game.Players.LocalPlayer.Character.Animate.Disabled = true
+        local Char = game.Players.LocalPlayer.Character
+        local Hum = Char:FindFirstChildOfClass("Humanoid") or Char:FindFirstChildOfClass("AnimationController")
+        for i,v in next, Hum:GetPlayingAnimationTracks() do
+            v:AdjustSpeed(0)
+        end
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Climbing, false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.FallingDown, false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Flying, false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Freefall, false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.GettingUp, false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Jumping, false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Landed, false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Physics, false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.PlatformStanding, false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Ragdoll, false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Running, false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.RunningNoPhysics, false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.StrafingNoPhysics, false)
+        speaker.Character.Humanoid:SetStateEnabled(Enum.HumanoidStateType.Swimming, false)
+        speaker.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Swimming)
+    end
+
+    if game:GetService("Players").LocalPlayer.Character:FindFirstChildOfClass("Humanoid").RigType == Enum.HumanoidRigType.R6 then
+        local plr = game.Players.LocalPlayer
+        local torso = plr.Character.Torso
+        local flying = true
+        local deb = true
+        local ctrl = {f = 0, b = 0, l = 0, r = 0}
+        local lastctrl = {f = 0, b = 0, l = 0, r = 0}
+        local maxspeed = 50
+        local speed = 0
+
+        local bg = Instance.new("BodyGyro", torso)
+        bg.P = 9e4
+        bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bg.cframe = torso.CFrame
+        local bv = Instance.new("BodyVelocity", torso)
+        bv.velocity = Vector3.new(0,0.1,0)
+        bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+        if nowe == true then
+            plr.Character.Humanoid.PlatformStand = true
+        end
+        while nowe == true or game:GetService("Players").LocalPlayer.Character.Humanoid.Health == 0 do
+            game:GetService("RunService").RenderStepped:Wait()
+            if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
+                speed = speed+.5+(speed/maxspeed)
+                if speed > maxspeed then
+                    speed = maxspeed
+                end
+            elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0) and speed ~= 0 then
+                speed = speed-1
+                if speed < 0 then
+                    speed = 0
                 end
             end
-            
-            -- Cleanup when done
-            toggleFlight(false)
-        end)()
-        
-        StarterGui:SetCore("SendNotification", {
-            Title = "✈️ FLY ENABLED",
-            Text = "Speed: "..currentSpeed,
-            Duration = 2
-        })
-    else
-        local humanoid = flightPart.Parent:FindFirstChildOfClass("Humanoid")
-        if humanoid then
-            humanoid.PlatformStand = false
-            humanoid:ChangeState(Enum.HumanoidStateType.RunningNoPhysics)
+            if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 then
+                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f+ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l+ctrl.r,(ctrl.f+ctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+                lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
+            elseif (ctrl.l + ctrl.r) == 0 and (ctrl.f + ctrl.b) == 0 and speed ~= 0 then
+                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (lastctrl.f+lastctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(lastctrl.l+lastctrl.r,(lastctrl.f+lastctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+            else
+                bv.velocity = Vector3.new(0,0,0)
+            end
+            bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f+ctrl.b)*50*speed/maxspeed),0,0)
         end
-        
-        StarterGui:SetCore("SendNotification", {
-            Title = "✈️ FLY DISABLED",
-            Duration = 2
-        })
+        ctrl = {f = 0, b = 0, l = 0, r = 0}
+        lastctrl = {f = 0, b = 0, l = 0, r = 0}
+        speed = 0
+        bg:Destroy()
+        bv:Destroy()
+        plr.Character.Humanoid.PlatformStand = false
+        game.Players.LocalPlayer.Character.Animate.Disabled = false
+        tpwalking = false
+    else
+        local plr = game.Players.LocalPlayer
+        local UpperTorso = plr.Character.UpperTorso
+        local flying = true
+        local deb = true
+        local ctrl = {f = 0, b = 0, l = 0, r = 0}
+        local lastctrl = {f = 0, b = 0, l = 0, r = 0}
+        local maxspeed = 50
+        local speed = 0
+
+        local bg = Instance.new("BodyGyro", UpperTorso)
+        bg.P = 9e4
+        bg.maxTorque = Vector3.new(9e9, 9e9, 9e9)
+        bg.cframe = UpperTorso.CFrame
+        local bv = Instance.new("BodyVelocity", UpperTorso)
+        bv.velocity = Vector3.new(0,0.1,0)
+        bv.maxForce = Vector3.new(9e9, 9e9, 9e9)
+        if nowe == true then
+            plr.Character.Humanoid.PlatformStand = true
+        end
+        while nowe == true or game:GetService("Players").LocalPlayer.Character.Humanoid.Health == 0 do
+            wait()
+            if ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0 then
+                speed = speed+.5+(speed/maxspeed)
+                if speed > maxspeed then
+                    speed = maxspeed
+                end
+            elseif not (ctrl.l + ctrl.r ~= 0 or ctrl.f + ctrl.b ~= 0) and speed ~= 0 then
+                speed = speed-1
+                if speed < 0 then
+                    speed = 0
+                end
+            end
+            if (ctrl.l + ctrl.r) ~= 0 or (ctrl.f + ctrl.b) ~= 0 then
+                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (ctrl.f+ctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(ctrl.l+ctrl.r,(ctrl.f+ctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+                lastctrl = {f = ctrl.f, b = ctrl.b, l = ctrl.l, r = ctrl.r}
+            elseif (ctrl.l + ctrl.r) == 0 and (ctrl.f + ctrl.b) == 0 and speed ~= 0 then
+                bv.velocity = ((game.Workspace.CurrentCamera.CoordinateFrame.lookVector * (lastctrl.f+lastctrl.b)) + ((game.Workspace.CurrentCamera.CoordinateFrame * CFrame.new(lastctrl.l+lastctrl.r,(lastctrl.f+lastctrl.b)*.2,0).p) - game.Workspace.CurrentCamera.CoordinateFrame.p))*speed
+            else
+                bv.velocity = Vector3.new(0,0,0)
+            end
+            bg.cframe = game.Workspace.CurrentCamera.CoordinateFrame * CFrame.Angles(-math.rad((ctrl.f+ctrl.b)*50*speed/maxspeed),0,0)
+        end
+        ctrl = {f = 0, b = 0, l = 0, r = 0}
+        lastctrl = {f = 0, b = 0, l = 0, r = 0}
+        speed = 0
+        bg:Destroy()
+        bv:Destroy()
+        plr.Character.Humanoid.PlatformStand = false
+        game.Players.LocalPlayer.Character.Animate.Disabled = false
+        tpwalking = false
     end
 end
 
--- Process chat commands
-local function processCommand(msg)
-    if not msg or type(msg) ~= "string" then return end
-    
-    msg = msg:lower():gsub("%s+", " "):trim()
-    if msg == "" then return end
-    
-    -- Check for prefixes
-    local prefix = msg:sub(1,1)
-    if table.find(PREFIXES, prefix) then
-        msg = msg:sub(2):trim()
-    end
-    
-    -- Command handling
-    if msg == "fly" then
-        toggleFlight(not isFlying)
-    elseif msg:match("^flyspeed%s+%d+$") then
-        local newSpeed = tonumber(msg:match("%d+"))
-        if newSpeed then
-            currentSpeed = math.clamp(newSpeed, 1, MAX_SPEED)
-            StarterGui:SetCore("SendNotification", {
-                Title = "⚡ SPEED SET",
-                Text = "Now: "..currentSpeed,
+-- Character added event
+game:GetService("Players").LocalPlayer.CharacterAdded:Connect(function(char)
+    wait(0.7)
+    game.Players.LocalPlayer.Character.Humanoid.PlatformStand = false
+    game.Players.LocalPlayer.Character.Animate.Disabled = false
+end)
+
+-- Chat handler
+game:GetService("Players").LocalPlayer.Chatted:Connect(function(message)
+    local isCmd, cmd = isCommand(message)
+    if isCmd then
+        cmd = cmd:lower():gsub("%s+", "") -- Remove whitespace and make lowercase
+        
+        if cmd == "fly" then
+            toggleFly()
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Fly System",
+                Text = "Fly " .. (nowe and "enabled" or "disabled"),
                 Duration = 2
             })
-            if isFlying then
-                toggleFlight(false)
-                toggleFlight(true)
+        elseif cmd == "unfly" then
+            if nowe then
+                toggleFly()
+                game:GetService("StarterGui"):SetCore("SendNotification", {
+                    Title = "Fly System",
+                    Text = "Fly disabled",
+                    Duration = 2
+                })
             end
+        elseif cmd:sub(1, 9) == "flyspeed " then
+            local newSpeed = tonumber(cmd:sub(10))
+            if newSpeed and newSpeed >= 1 and newSpeed <= 10000 then
+                speeds = newSpeed
+                if nowe then
+                    tpwalking = false
+                    for i = 1, speeds do
+                        spawn(function()
+                            local hb = game:GetService("RunService").Heartbeat
+                            tpwalking = true
+                            local chr = game.Players.LocalPlayer.Character
+                            local hum = chr and chr:FindFirstChildWhichIsA("Humanoid")
+                            while tpwalking and hb:Wait() and chr and hum and hum.Parent do
+                                if hum.MoveDirection.Magnitude > 0 then
+                                    chr:TranslateBy(hum.MoveDirection)
+                                end
+                            end
+                        end)
+                    end
+                end
+                game:GetService("StarterGui"):SetCore("SendNotification", {
+                    Title = "Fly System",
+                    Text = "Speed set to " .. speeds,
+                    Duration = 2
+                })
+            else
+                game:GetService("StarterGui"):SetCore("SendNotification", {
+                    Title = "Fly System",
+                    Text = "Invalid speed (1-10000)",
+                    Duration = 2
+                })
+            end
+        elseif cmd == "flycmds" or cmd == "flyhelp" then
+            game:GetService("StarterGui"):SetCore("SendNotification", {
+                Title = "Fly Commands",
+                Text = "fly - Toggle flight\nflyspeed [1-10000] - Set speed\nunfly - Disable flight",
+                Duration = 5
+            })
         end
-    elseif msg:match("^%d+$") then -- Just number
-        currentSpeed = math.clamp(tonumber(msg), 1, MAX_SPEED)
-        toggleFlight(true)
-    elseif msg == "unfly" then
-        toggleFlight(false)
-    elseif msg == "help" or msg == "cmds" then
-        StarterGui:SetCore("SendNotification", {
-            Title = "FLY COMMANDS",
-            Text = "fly - Toggle\nflyspeed [1-10000]\nunfly - Stop\nPrefixes: ; / # : ? .",
-            Duration = 5
-        })
     end
-end
+end)
 
--- Initialize
-local function initialize()
-    -- Chat command handler
-    Players.LocalPlayer.Chatted:Connect(processCommand)
-    
-    -- Auto-cleanup on character change
-    Players.LocalPlayer.CharacterAdded:Connect(function(char)
-        toggleFlight(false)
-    end)
-    
-    -- Show help on start
-    StarterGui:SetCore("SendNotification", {
-        Title = "FLY SYSTEM READY",
-        Text = "Type 'help' for commands",
-        Duration = 5
-    })
-end
-
--- Start with error protection
-pcall(initialize)
+-- Initial notification with commands
+game:GetService("StarterGui"):SetCore("SendNotification", {
+    Title = "Fly System Loaded",
+    Text = "Commands: fly, flyspeed [1-10000], unfly\nPrefixes: ; . / # : ?",
+    Icon = "rbxthumb://type=Asset&id=5107182114&w=150&h=150",
+    Duration = 5
+})
