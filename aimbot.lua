@@ -1,6 +1,10 @@
 --[[
-	Aimbot GUI v2.0
-	Compact and Stylish UI
+  🔥 AIMBOT MINI v3.0 🔥
+  - Super Compact GUI (100x70)
+  - ON/OFF Toggle (Red/Green)
+  - Small FOV Circle + Center Dot
+  - Precise Head Lock
+  - Delete to Close
 ]]
 
 -- Services
@@ -9,239 +13,150 @@ local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 
--- Main GUI
+-- GUI Setup
 local AimbotGUI = Instance.new("ScreenGui")
-AimbotGUI.Name = "AimbotGUI"
+AimbotGUI.Name = "MiniAimbot"
 AimbotGUI.ResetOnSpawn = false
 AimbotGUI.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- Main Frame
+-- Main Frame (Tiny!)
 local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
 MainFrame.Parent = AimbotGUI
-MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-MainFrame.BackgroundTransparency = 0.2
-MainFrame.BorderSizePixel = 0
-MainFrame.Position = UDim2.new(0.8, 0, 0.5, -50)
-MainFrame.Size = UDim2.new(0, 150, 0, 120)
+MainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+MainFrame.BackgroundTransparency = 0.3
+MainFrame.Position = UDim2.new(0.85, 0, 0.5, -35)
+MainFrame.Size = UDim2.new(0, 100, 0, 70)
 MainFrame.Active = true
 MainFrame.Draggable = true
 
--- Corner Radius
+-- Rounded Corners
 local UICorner = Instance.new("UICorner")
-UICorner.CornerRadius = UDim.new(0, 6)
+UICorner.CornerRadius = UDim.new(0, 5)
 UICorner.Parent = MainFrame
-
--- Title Bar
-local TitleBar = Instance.new("Frame")
-TitleBar.Name = "TitleBar"
-TitleBar.Parent = MainFrame
-TitleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-TitleBar.BorderSizePixel = 0
-TitleBar.Size = UDim2.new(1, 0, 0, 25)
-
-local TitleCorner = Instance.new("UICorner")
-TitleCorner.CornerRadius = UDim.new(0, 6)
-TitleCorner.Parent = TitleBar
-
-local Title = Instance.new("TextLabel")
-Title.Name = "Title"
-Title.Parent = TitleBar
-Title.BackgroundTransparency = 1
-Title.Position = UDim2.new(0, 10, 0, 0)
-Title.Size = UDim2.new(1, -10, 1, 0)
-Title.Font = Enum.Font.GothamSemibold
-Title.Text = "AIMBOT"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 14
-Title.TextXAlignment = Enum.TextXAlignment.Left
 
 -- Toggle Button
 local ToggleButton = Instance.new("TextButton")
-ToggleButton.Name = "ToggleButton"
 ToggleButton.Parent = MainFrame
-ToggleButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-ToggleButton.Position = UDim2.new(0.1, 0, 0.3, 0)
-ToggleButton.Size = UDim2.new(0.8, 0, 0, 30)
-ToggleButton.Font = Enum.Font.GothamSemibold
-ToggleButton.Text = "ENABLE"
-ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50) -- Red when off
+ToggleButton.Position = UDim2.new(0.1, 0, 0.2, 0)
+ToggleButton.Size = UDim2.new(0.8, 0, 0, 25)
+ToggleButton.Font = Enum.Font.GothamBold
+ToggleButton.Text = "OFF"
+ToggleButton.TextColor3 = Color3.white
 ToggleButton.TextSize = 12
 ToggleButton.AutoButtonColor = false
 
-local ButtonCorner = Instance.new("UICorner")
-ButtonCorner.CornerRadius = UDim.new(0, 4)
-ButtonCorner.Parent = ToggleButton
+-- Button Corner
+Instance.new("UICorner", ToggleButton).CornerRadius = UDim.new(0, 4)
 
--- Status Indicator
-local StatusIndicator = Instance.new("Frame")
-StatusIndicator.Name = "StatusIndicator"
-StatusIndicator.Parent = MainFrame
-StatusIndicator.BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-StatusIndicator.Position = UDim2.new(0.1, 0, 0.6, 0)
-StatusIndicator.Size = UDim2.new(0.8, 0, 0, 10)
-StatusIndicator.ZIndex = 2
+-- Title Label
+local TitleLabel = Instance.new("TextLabel")
+TitleLabel.Parent = MainFrame
+TitleLabel.BackgroundTransparency = 1
+TitleLabel.Position = UDim2.new(0.1, 0, 0.6, 0)
+TitleLabel.Size = UDim2.new(0.8, 0, 0, 15)
+TitleLabel.Font = Enum.Font.Gotham
+TitleLabel.Text = "LOCK ON"
+TitleLabel.TextColor3 = Color3.white
+TitleLabel.TextSize = 11
 
-local StatusCorner = Instance.new("UICorner")
-StatusCorner.CornerRadius = UDim.new(0, 4)
-StatusCorner.Parent = StatusIndicator
-
-local StatusLabel = Instance.new("TextLabel")
-StatusLabel.Name = "StatusLabel"
-StatusLabel.Parent = MainFrame
-StatusLabel.BackgroundTransparency = 1
-StatusLabel.Position = UDim2.new(0.1, 0, 0.72, 0)
-StatusLabel.Size = UDim2.new(0.8, 0, 0, 15)
-StatusLabel.Font = Enum.Font.Gotham
-StatusLabel.Text = "STATUS: OFF"
-StatusLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-StatusLabel.TextSize = 12
-
--- Footer
-local Footer = Instance.new("Frame")
-Footer.Name = "Footer"
-Footer.Parent = MainFrame
-Footer.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-Footer.BorderSizePixel = 0
-Footer.Position = UDim2.new(0, 0, 1, -15)
-Footer.Size = UDim2.new(1, 0, 0, 15)
-
-local FooterCorner = Instance.new("UICorner")
-FooterCorner.CornerRadius = UDim.new(0, 6)
-FooterCorner.Parent = Footer
-
-local FooterText = Instance.new("TextLabel")
-FooterText.Name = "FooterText"
-FooterText.Parent = Footer
-FooterText.BackgroundTransparency = 1
-FooterText.Size = UDim2.new(1, 0, 1, 0)
-FooterText.Font = Enum.Font.Gotham
-FooterText.Text = "by Bloodscript"
-FooterText.TextColor3 = Color3.fromRGB(200, 200, 200)
-FooterText.TextSize = 10
-
--- FOV Circle
-local fov = 100
+-- FOV Drawing
 local Cam = game.Workspace.CurrentCamera
-local FOVring = Drawing.new("Circle")
-FOVring.Visible = false
-FOVring.Thickness = 1
-FOVring.Color = Color3.fromRGB(0, 255, 255)
-FOVring.Filled = false
-FOVring.Transparency = 0.7
-FOVring.Radius = fov
-FOVring.Position = Cam.ViewportSize / 2
+local FOV = 60 -- Small FOV
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Visible = false
+FOVCircle.Thickness = 1
+FOVCircle.Color = Color3.fromRGB(0, 200, 255)
+FOVCircle.Transparency = 0.7
+FOVCircle.Radius = FOV
+FOVCircle.Position = Cam.ViewportSize/2
+
+-- Center Dot
+local CenterDot = Drawing.new("Circle")
+CenterDot.Visible = false
+CenterDot.Filled = true
+CenterDot.Radius = 2
+CenterDot.Color = Color3.white
+CenterDot.Position = Cam.ViewportSize/2
 
 -- Aimbot Logic
-local aimbotEnabled = false
+local Enabled = false
 
-local function updateDrawings()
-    FOVring.Position = Cam.ViewportSize / 2
+local function UpdateDrawings()
+    FOVCircle.Position = Cam.ViewportSize/2
+    CenterDot.Position = Cam.ViewportSize/2
 end
 
-local function lookAt(target)
-    local lookVector = (target - Cam.CFrame.Position).unit
-    Cam.CFrame = CFrame.new(Cam.CFrame.Position, Cam.CFrame.Position + lookVector)
-end
-
-local function getClosestPlayerInFOV(trg_part)
-    local nearest = nil
-    local last = math.huge
-    local playerMousePos = Cam.ViewportSize / 2
+local function GetClosestPlayer()
+    local closest = nil
+    local minDist = math.huge
     local localPlayer = Players.LocalPlayer
-    local localTeam = localPlayer.Team
-
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= localPlayer and (not player.Team or player.Team ~= localTeam) then
-            local part = player.Character and player.Character:FindFirstChild(trg_part)
-            if part then
-                local ePos, isVisible = Cam:WorldToViewportPoint(part.Position)
-                local distance = (Vector2.new(ePos.x, ePos.y) - playerMousePos).Magnitude
-
-                if distance < last and isVisible and distance < fov then
-                    last = distance
-                    nearest = player
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= localPlayer and player.Character then
+            local head = player.Character:FindFirstChild("Head")
+            if head then
+                local pos, onScreen = Cam:WorldToViewportPoint(head.Position)
+                if onScreen then
+                    local dist = (Vector2.new(pos.X, pos.Y) - FOVCircle.Position).Magnitude
+                    if dist < minDist and dist < FOV then
+                        minDist = dist
+                        closest = player
+                    end
                 end
             end
         end
     end
-
-    return nearest
+    
+    return closest
 end
 
--- Toggle Function with Animation
-local function toggleAimbot()
-    aimbotEnabled = not aimbotEnabled
+-- Toggle Function
+local function ToggleAimbot()
+    Enabled = not Enabled
     
-    local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
-    
-    if aimbotEnabled then
-        -- Animate to ON state
-        local tween = TweenService:Create(ToggleButton, tweenInfo, {
+    if Enabled then
+        -- Change to GREEN
+        TweenService:Create(ToggleButton, TweenInfo.new(0.2), {
             BackgroundColor3 = Color3.fromRGB(50, 255, 50),
-            Text = "DISABLE"
-        })
-        tween:Play()
-        
-        local statusTween = TweenService:Create(StatusIndicator, tweenInfo, {
-            BackgroundColor3 = Color3.fromRGB(50, 255, 50)
-        })
-        statusTween:Play()
-        
-        StatusLabel.Text = "STATUS: ON"
-        FOVring.Visible = true
+            Text = "ON"
+        }):Play()
+        FOVCircle.Visible = true
+        CenterDot.Visible = true
     else
-        -- Animate to OFF state
-        local tween = TweenService:Create(ToggleButton, tweenInfo, {
-            BackgroundColor3 = Color3.fromRGB(45, 45, 45),
-            Text = "ENABLE"
-        })
-        tween:Play()
-        
-        local statusTween = TweenService:Create(StatusIndicator, tweenInfo, {
-            BackgroundColor3 = Color3.fromRGB(255, 50, 50)
-        })
-        statusTween:Play()
-        
-        StatusLabel.Text = "STATUS: OFF"
-        FOVring.Visible = false
+        -- Change to RED
+        TweenService:Create(ToggleButton, TweenInfo.new(0.2), {
+            BackgroundColor3 = Color3.fromRGB(255, 50, 50),
+            Text = "OFF"
+        }):Play()
+        FOVCircle.Visible = false
+        CenterDot.Visible = false
     end
 end
 
--- Button Effects
-ToggleButton.MouseEnter:Connect(function()
-    if not aimbotEnabled then
-        TweenService:Create(ToggleButton, TweenInfo.new(0.1), {
-            BackgroundColor3 = Color3.fromRGB(65, 65, 65)
-        }):Play()
-    end
-end)
+-- Button Click
+ToggleButton.MouseButton1Click:Connect(ToggleAimbot)
 
-ToggleButton.MouseLeave:Connect(function()
-    if not aimbotEnabled then
-        TweenService:Create(ToggleButton, TweenInfo.new(0.1), {
-            BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-        }):Play()
-    end
-end)
-
-ToggleButton.MouseButton1Click:Connect(toggleAimbot)
-
--- Close on Delete
+-- Delete to Close
 UserInputService.InputBegan:Connect(function(input)
     if input.KeyCode == Enum.KeyCode.Delete then
         AimbotGUI:Destroy()
-        FOVring:Remove()
+        FOVCircle:Remove()
+        CenterDot:Remove()
     end
 end)
 
 -- Main Loop
 RunService.RenderStepped:Connect(function()
-    updateDrawings()
-    if aimbotEnabled then
-        local closest = getClosestPlayerInFOV("Head")
-        if closest and closest.Character:FindFirstChild("Head") then
-            lookAt(closest.Character.Head.Position)
+    UpdateDrawings()
+    
+    if Enabled then
+        local target = GetClosestPlayer()
+        if target and target.Character then
+            local head = target.Character:FindFirstChild("Head")
+            if head then
+                Cam.CFrame = CFrame.new(Cam.CFrame.Position, head.Position)
+            end
         end
     end
 end)
