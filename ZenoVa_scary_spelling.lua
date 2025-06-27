@@ -427,7 +427,7 @@ local function teller()
     gui.Parent = p.PlayerGui    
 
     local f = Instance.new("Frame")
-    f.Size = UDim2.new(0, 300, 0, 250) -- Changed to larger size (300x250)
+    f.Size = UDim2.new(0, 100, 0, 75)  -- Setengah dari ukuran sebelumnya
     f.Position = UDim2.new(0.5, -150, 0.2, -125) -- Adjusted position to center
     f.BackgroundColor3 = Color3.fromRGB(40,40,40)
     f.BackgroundTransparency = 0.2
