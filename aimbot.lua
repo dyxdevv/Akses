@@ -1,12 +1,10 @@
 --[[
-    Enhanced Aimbot GUI
+    Enhanced Aimbot GUI v2
     Features:
-    - Sleek, compact design
+    - Fixed toggle functionality
+    - Proper FOV circle control
     - Smooth animations
-    - Visual FOV circle with center dot
-    - Color-changing toggle button
-    - Status indicator
-    - Draggable window
+    - Visual status feedback
 ]]
 
 -- Services
@@ -75,22 +73,6 @@ Title.TextColor3 = Color3.fromRGB(220, 220, 220)
 Title.TextSize = 14
 Title.TextXAlignment = Enum.TextXAlignment.Left
 
--- Close Button (optional)
-local CloseButton = Instance.new("TextButton")
-CloseButton.Name = "CloseButton"
-CloseButton.Parent = TitleBar
-CloseButton.BackgroundTransparency = 1
-CloseButton.Position = UDim2.new(1, -25, 0, 5)
-CloseButton.Size = UDim2.new(0, 20, 0, 20)
-CloseButton.Font = Enum.Font.GothamBold
-CloseButton.Text = "X"
-CloseButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-CloseButton.TextSize = 14
-
-CloseButton.MouseButton1Click:Connect(function()
-    AimbotGUI:Destroy()
-end)
-
 -- Toggle Button
 local ToggleButton = Instance.new("TextButton")
 ToggleButton.Name = "ToggleButton"
@@ -135,7 +117,7 @@ CreditsLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
 CreditsLabel.TextSize = 12
 CreditsLabel.TextXAlignment = Enum.TextXAlignment.Right
 
--- FOV Circle Drawing
+-- FOV Settings
 local FOV = 100
 local FOVCircle = Drawing.new("Circle")
 FOVCircle.Visible = false
@@ -155,44 +137,57 @@ CenterDot.Filled = true
 CenterDot.Radius = 2
 CenterDot.Position = Cam.ViewportSize / 2
 
--- Aimbot Variables
+-- Aimbot State
 local AimbotEnabled = false
 local TargetPart = "Head"
 
 -- Animation function
-local function AnimateButton(button, newColor, newText)
+local function AnimateButton(newState)
     local tweenInfo = TweenInfo.new(
         0.2,
         Enum.EasingStyle.Quad,
         Enum.EasingDirection.Out
     )
     
-    local colorTween = TweenService:Create(button, tweenInfo, {BackgroundColor3 = newColor})
-    local textTween = TweenService:Create(button, tweenInfo, {Text = newText})
-    
-    colorTween:Play()
-    textTween:Play()
-end
-
--- Toggle function
-local function ToggleAimbot()
-    AimbotEnabled = not AimbotEnabled
-    
-    if AimbotEnabled then
-        -- Turn ON
-        AnimateButton(ToggleButton, Color3.fromRGB(60, 200, 60), "Disable Aimbot")
+    if newState then
+        -- Turn ON animations
+        local colorTween = TweenService:Create(ToggleButton, tweenInfo, {
+            BackgroundColor3 = Color3.fromRGB(60, 200, 60)
+        })
+        local textTween = TweenService:Create(ToggleButton, tweenInfo, {
+            Text = "Disable Aimbot"
+        })
+        
+        colorTween:Play()
+        textTween:Play()
+        
         StatusLabel.Text = "Status: ON"
         StatusLabel.TextColor3 = Color3.fromRGB(60, 200, 60)
         FOVCircle.Visible = true
         CenterDot.Visible = true
     else
-        -- Turn OFF
-        AnimateButton(ToggleButton, Color3.fromRGB(200, 60, 60), "Enable Aimbot")
+        -- Turn OFF animations
+        local colorTween = TweenService:Create(ToggleButton, tweenInfo, {
+            BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+        })
+        local textTween = TweenService:Create(ToggleButton, tweenInfo, {
+            Text = "Enable Aimbot"
+        })
+        
+        colorTween:Play()
+        textTween:Play()
+        
         StatusLabel.Text = "Status: OFF"
         StatusLabel.TextColor3 = Color3.fromRGB(200, 60, 60)
         FOVCircle.Visible = false
         CenterDot.Visible = false
     end
+end
+
+-- Toggle function
+local function ToggleAimbot()
+    AimbotEnabled = not AimbotEnabled
+    AnimateButton(AimbotEnabled)
 end
 
 -- Button click event
@@ -204,7 +199,7 @@ local function UpdateFOV()
     CenterDot.Position = Cam.ViewportSize / 2
 end
 
--- Aimbot function
+-- Target finding function
 local function GetClosestPlayer()
     if not AimbotEnabled then return nil end
     
@@ -248,22 +243,20 @@ RunService.RenderStepped:Connect(function()
         if targetPlayer and targetPlayer.Character then
             local targetPart = targetPlayer.Character:FindFirstChild(TargetPart)
             if targetPart then
-                -- Smooth aim (optional)
+                -- Smooth aiming
                 local currentCF = Cam.CFrame
                 local targetPos = targetPart.Position
                 local newCF = CFrame.new(currentCF.Position, targetPos)
-                Cam.CFrame = newCF:Lerp(currentCF, 0.7) -- Adjust lerp value for smoothness
+                Cam.CFrame = newCF:Lerp(currentCF, 0.7)
             end
         end
     end
 end)
 
--- Keybind to toggle GUI visibility (optional)
+-- Keybinds
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if not gameProcessed then
-        if input.KeyCode == Enum.KeyCode.Insert then
-            MainFrame.Visible = not MainFrame.Visible
-        elseif input.KeyCode == Enum.KeyCode.Delete then
+        if input.KeyCode == Enum.KeyCode.Delete then
             AimbotGUI:Destroy()
             FOVCircle:Remove()
             CenterDot:Remove()
