@@ -1,6 +1,6 @@
 --[[
-    Aimbot GUI v2.1
-    Ultra Compact UI
+    Aimbot GUI v2.2
+    Ultra Compact with Visual Indicators
 ]]
 
 -- Services
@@ -15,7 +15,7 @@ AimbotGUI.Name = "AimbotGUI"
 AimbotGUI.ResetOnSpawn = false
 AimbotGUI.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
 
--- Main Frame (Smaller size)
+-- Main Frame (Compact size)
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.Parent = AimbotGUI
@@ -23,7 +23,7 @@ MainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 MainFrame.BackgroundTransparency = 0.2
 MainFrame.BorderSizePixel = 0
 MainFrame.Position = UDim2.new(0.8, 0, 0.5, -50)
-MainFrame.Size = UDim2.new(0, 120, 0, 100) -- Smaller size
+MainFrame.Size = UDim2.new(0, 110, 0, 90) -- More compact size
 MainFrame.Active = true
 MainFrame.Draggable = true
 
@@ -38,7 +38,7 @@ TitleBar.Name = "TitleBar"
 TitleBar.Parent = MainFrame
 TitleBar.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 TitleBar.BorderSizePixel = 0
-TitleBar.Size = UDim2.new(1, 0, 0, 20) -- Smaller title bar
+TitleBar.Size = UDim2.new(1, 0, 0, 20)
 
 local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0, 6)
@@ -53,16 +53,16 @@ Title.Size = UDim2.new(1, -8, 1, 0)
 Title.Font = Enum.Font.GothamSemibold
 Title.Text = "AIMBOT"
 Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.TextSize = 12 -- Smaller text
+Title.TextSize = 12
 Title.TextXAlignment = Enum.TextXAlignment.Left
 
--- Toggle Button
+-- Toggle Button (Improved visual feedback)
 local ToggleButton = Instance.new("TextButton")
 ToggleButton.Name = "ToggleButton"
 ToggleButton.Parent = MainFrame
-ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 50, 50) -- Red when off
-ToggleButton.Position = UDim2.new(0.1, 0, 0.25, 0)
-ToggleButton.Size = UDim2.new(0.8, 0, 0, 25) -- Smaller button
+ToggleButton.BackgroundColor3 = Color3.fromRGB(255, 60, 60) -- Vibrant red when off
+ToggleButton.Position = UDim2.new(0.1, 0, 0.3, 0)
+ToggleButton.Size = UDim2.new(0.8, 0, 0, 25)
 ToggleButton.Font = Enum.Font.GothamSemibold
 ToggleButton.Text = "OFF"
 ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -72,8 +72,6 @@ ToggleButton.AutoButtonColor = false
 local ButtonCorner = Instance.new("UICorner")
 ButtonCorner.CornerRadius = UDim.new(0, 4)
 ButtonCorner.Parent = ToggleButton
-
--- Status Indicator (Removed separate indicator since button shows status)
 
 -- Footer
 local Footer = Instance.new("Frame")
@@ -98,8 +96,8 @@ FooterText.Text = "by Bloodscript"
 FooterText.TextColor3 = Color3.fromRGB(200, 200, 200)
 FooterText.TextSize = 10
 
--- FOV Circle (Smaller radius with dot in center)
-local fov = 60 -- Smaller FOV circle
+-- FOV Circle (Medium size with center dot)
+local fov = 80 -- Medium-sized FOV circle
 local Cam = game.Workspace.CurrentCamera
 local FOVring = Drawing.new("Circle")
 FOVring.Visible = false
@@ -110,14 +108,14 @@ FOVring.Transparency = 0.7
 FOVring.Radius = fov
 FOVring.Position = Cam.ViewportSize / 2
 
--- Center dot
+-- Center dot (More visible)
 local CenterDot = Drawing.new("Circle")
 CenterDot.Visible = false
 CenterDot.Thickness = 1
 CenterDot.Color = Color3.fromRGB(255, 255, 255)
 CenterDot.Filled = true
-CenterDot.Transparency = 1
-CenterDot.Radius = 2
+CenterDot.Transparency = 0.8 -- Slightly transparent
+CenterDot.Radius = 3 -- Slightly larger dot
 CenterDot.Position = Cam.ViewportSize / 2
 
 -- Aimbot Logic
@@ -159,16 +157,16 @@ local function getClosestPlayerInFOV(trg_part)
     return nearest
 end
 
--- Toggle Function with Animation
+-- Enhanced Toggle Function
 local function toggleAimbot()
     aimbotEnabled = not aimbotEnabled
     
-    local tweenInfo = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
+    local tweenInfo = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut)
     
     if aimbotEnabled then
         -- Animate to ON state
         local tween = TweenService:Create(ToggleButton, tweenInfo, {
-            BackgroundColor3 = Color3.fromRGB(50, 255, 50), -- Green when on
+            BackgroundColor3 = Color3.fromRGB(60, 255, 60), -- Vibrant green when on
             Text = "ON"
         })
         tween:Play()
@@ -178,7 +176,7 @@ local function toggleAimbot()
     else
         -- Animate to OFF state
         local tween = TweenService:Create(ToggleButton, tweenInfo, {
-            BackgroundColor3 = Color3.fromRGB(255, 50, 50), -- Red when off
+            BackgroundColor3 = Color3.fromRGB(255, 60, 60), -- Vibrant red when off
             Text = "OFF"
         })
         tween:Play()
@@ -188,16 +186,16 @@ local function toggleAimbot()
     end
 end
 
--- Button Effects
+-- Improved Button Effects
 ToggleButton.MouseEnter:Connect(function()
-    local targetColor = aimbotEnabled and Color3.fromRGB(40, 220, 40) or Color3.fromRGB(220, 40, 40)
+    local targetColor = aimbotEnabled and Color3.fromRGB(80, 255, 80) or Color3.fromRGB(255, 80, 80)
     TweenService:Create(ToggleButton, TweenInfo.new(0.1), {
         BackgroundColor3 = targetColor
     }):Play()
 end)
 
 ToggleButton.MouseLeave:Connect(function()
-    local targetColor = aimbotEnabled and Color3.fromRGB(50, 255, 50) or Color3.fromRGB(255, 50, 50)
+    local targetColor = aimbotEnabled and Color3.fromRGB(60, 255, 60) or Color3.fromRGB(255, 60, 60)
     TweenService:Create(ToggleButton, TweenInfo.new(0.1), {
         BackgroundColor3 = targetColor
     }):Play()
